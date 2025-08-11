@@ -533,13 +533,15 @@
       // Process annotations by scene
       mvScanQAData = {};
       
-      annotations.forEach((item) => {
+      annotations.forEach((item, globalIndex) => {
         const sceneId = item.scene_id;
         
         if (!mvScanQAData[sceneId]) {
           mvScanQAData[sceneId] = [];
         }
         
+        // Store the global index with the item
+        item.globalIndex = globalIndex;
         mvScanQAData[sceneId].push(item);
       });
       
@@ -576,21 +578,22 @@
     if (mvScanQAData[sceneId]) {
       mvScanQAData[sceneId].forEach((example, index) => {
         const option = document.createElement('option');
-        option.value = index;
+        option.value = example.globalIndex; // Use global index as the value
         option.textContent = `Example ${index + 1}: ${example.new_question.substring(0, 50)}...`;
         exampleSelector.appendChild(option);
       });
       
       // Load first example
       if (mvScanQAData[sceneId].length > 0) {
-        displayMVExample(sceneId, 0);
+        displayMVExample(sceneId, mvScanQAData[sceneId][0].globalIndex);
       }
     }
   }
   
   // Display selected example
-  function displayMVExample(sceneId, exampleIndex) {
-    const example = mvScanQAData[sceneId][exampleIndex];
+  function displayMVExample(sceneId, globalExampleIndex) {
+    const example = mvScanQAData[sceneId].find(ex => ex.globalIndex === globalExampleIndex);
+    
     
     if (!example) return;
     
@@ -633,10 +636,10 @@
       `<span class="tag is-medium is-info">${overlapMean}%</span>`;
 
     // 加载鸟瞰图和标注
-    loadBirdViewWithAnnotations(sceneId, exampleIndex, example);
+    loadBirdViewWithAnnotations(sceneId, globalExampleIndex, example);
     
     // 加载Oracle视图
-    loadOracleViews(sceneId, exampleIndex, example);
+    loadOracleViews(sceneId, globalExampleIndex, example);
   }
 
   // 加载带标注的鸟瞰图
@@ -850,6 +853,7 @@
     // Example selector event
     document.getElementById('mvScanQAExampleSelector').addEventListener('change', function(e) {
       const sceneId = document.getElementById('mvScanQASceneSelector').value;
+      // The value is now the global index, so we pass it directly.
       displayMVExample(sceneId, parseInt(e.target.value));
     });
   });
